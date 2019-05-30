@@ -1,0 +1,15 @@
+[package]
+name = "dmm"
+description = "Byond game engine map files (DMM) structure and parsing"
+version = "0.1.0"
+authors = ["Hugo Laloge <hugo.laloge@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+serde = { version = "1", optional = true, features = ["derive"] }
+
+[dev-dependencies]
+serde_test = "1"
+
+[features]
+default = ["serde"]
