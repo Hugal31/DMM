@@ -31,6 +31,7 @@ pub struct Datum {
 /// DMM Literal
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", serde(untagged))]
 pub enum Literal {
     Str(String),
     Number(i64),
