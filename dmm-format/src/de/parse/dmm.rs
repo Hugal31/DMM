@@ -1,12 +1,7 @@
-use nom::{
-    alpha,
-    digit,
-    named, do_parse, many0, char, tag, map, map_res,
-    types::CompleteStr
-};
+use nom::{alpha, char, digit, map, map_res, named, tag, types::CompleteStr};
 
-use super::{DMM, DictionaryEntry, GridEntry};
 use super::dictionary::parse_dictionary_entry;
+use super::{DictionaryEntry, GridEntry, DMM};
 
 named!(pub parse_dmm<CompleteStr, DMM>,
    ws_comm!(do_parse!(
@@ -101,10 +96,13 @@ mod tests {
     fn test_parse_grid_entry() {
         assert_eq!(
             parse_grid_entry(CompleteStr("(1,2,3) = {\"aaa bbb\"}")),
-            Ok((CompleteStr(""), GridEntry {
-                coords: (1,2,3),
-                keys: vec!["aaa", "bbb"],
-            }))
+            Ok((
+                CompleteStr(""),
+                GridEntry {
+                    coords: (1, 2, 3),
+                    keys: vec!["aaa", "bbb"],
+                }
+            ))
         );
     }
 
@@ -120,17 +118,19 @@ mod tests {
     fn test_parse_dictionary() {
         assert_eq!(
             parse_dictionary(CompleteStr("\"aaB\" = (  ), \"aaC\" = () (1,2,3)")),
-            Ok((CompleteStr("(1,2,3)"), vec![
-                DictionaryEntry {
-                    key: "aaB",
-                    datums: Vec::new(),
-                },
-                DictionaryEntry {
-                    key: "aaC",
-                    datums: Vec::new(),
-                }
-            ]))
+            Ok((
+                CompleteStr("(1,2,3)"),
+                vec![
+                    DictionaryEntry {
+                        key: "aaB",
+                        datums: Vec::new(),
+                    },
+                    DictionaryEntry {
+                        key: "aaC",
+                        datums: Vec::new(),
+                    }
+                ]
+            ))
         );
-
     }
 }

@@ -1,12 +1,10 @@
 use nom::{
-    alpha,
-    alphanumeric,
-    named, char, recognize, tuple, opt, many0, alt, tag, sep,
-    types::CompleteStr
+    alpha, alphanumeric, alt, char, many0, named, opt, recognize, sep, tag, tuple,
+    types::CompleteStr,
 };
 
-use super::{VarEdit};
 use super::literal::parse_literal;
+use super::VarEdit;
 
 named!(pub parse_var_edit<CompleteStr, VarEdit>,
     ws_comm!(
@@ -37,10 +35,13 @@ mod tests {
     fn test_var_edit_comm() {
         assert_eq!(
             parse_var_edit(CompleteStr("abc // This is a comment\n= -3")),
-            Ok((CompleteStr(""), VarEdit{
-                identifier: "abc",
-                value: Literal::Number(-3)
-            }))
+            Ok((
+                CompleteStr(""),
+                VarEdit {
+                    identifier: "abc",
+                    value: Literal::Number(-3)
+                }
+            ))
         );
     }
 
@@ -48,10 +49,13 @@ mod tests {
     fn test_var_edit() {
         assert_eq!(
             parse_var_edit(CompleteStr("abc = -3")),
-            Ok((CompleteStr(""), VarEdit{
-                identifier: "abc",
-                value: Literal::Number(-3)
-            }))
+            Ok((
+                CompleteStr(""),
+                VarEdit {
+                    identifier: "abc",
+                    value: Literal::Number(-3)
+                }
+            ))
         );
     }
 

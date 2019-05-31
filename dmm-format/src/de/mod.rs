@@ -1,7 +1,7 @@
 mod parse;
 
-use crate::error::{Error, Result};
 use self::parse::*;
+use crate::error::{Error, Result};
 use nom::types::CompleteStr;
 
 pub fn from_str(input: &str) -> Result<::dmm::DMM> {
@@ -17,11 +17,4 @@ pub fn from_str(input: &str) -> Result<::dmm::DMM> {
             }
         })
         .map(|dmm| dmm.into())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::collections::HashMap;
-
 }

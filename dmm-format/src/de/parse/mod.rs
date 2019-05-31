@@ -1,7 +1,7 @@
 use std::convert::TryInto;
 
 use nom::{
-    alt, char, named, map, many1, tuple, opt, preceded, tag, many0, none_of, one_of,
+    alt, char, many0, many1, map, named, none_of, one_of, opt, preceded, tag, tuple,
     types::CompleteStr,
 };
 
@@ -25,7 +25,6 @@ named!(spaces_nonl<CompleteStr, ()>,
   map!(many0!(one_of!(" \t\x0c")), |_| ())
 );
 
-
 /// Like `ws!()`, but ignores comments as well
 macro_rules! ws_comm (
   ($i:expr, $($args:tt)*) => (
@@ -48,13 +47,12 @@ macro_rules! ws_comm (
 );
 
 mod datum;
-mod dmm;
 mod dictionary;
+mod dmm;
 mod literal;
 mod var_edit;
 
 pub use self::dmm::parse_dmm;
-use std::collections::HashMap;
 
 /// Parsed DMM AST
 #[derive(Clone, Debug, PartialEq)]
@@ -66,7 +64,7 @@ pub struct DMM<'s> {
 #[derive(Clone, Debug, PartialEq)]
 pub struct DictionaryEntry<'s> {
     pub key: &'s str,
-    pub datums: Vec<Datum<'s>>
+    pub datums: Vec<Datum<'s>>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -98,12 +96,24 @@ pub struct GridEntry<'s> {
 impl Into<::dmm::DMM> for DMM<'_> {
     fn into(self) -> ::dmm::DMM {
         ::dmm::DMM::new(
-            self.dictionary.into_iter()
-                .map(|de| (de.key.try_into().unwrap(), de.datums.into_iter().map(|d| d.into()).collect()))
+            self.dictionary
+                .into_iter()
+                .map(|de| {
+                    (
+                        de.key.try_into().unwrap(),
+                        de.datums.into_iter().map(|d| d.into()).collect(),
+                    )
+                })
                 .collect(),
-            self.grid.into_iter()
-                .map(|GridEntry{coords, keys}| (coords, keys.into_iter().map(|k| k.try_into().unwrap()).collect()))
-                .collect()
+            self.grid
+                .into_iter()
+                .map(|GridEntry { coords, keys }| {
+                    (
+                        coords,
+                        keys.into_iter().map(|k| k.try_into().unwrap()).collect(),
+                    )
+                })
+                .collect(),
         )
     }
 }
@@ -112,9 +122,10 @@ impl Into<::dmm::Datum> for Datum<'_> {
     fn into(self) -> ::dmm::Datum {
         ::dmm::Datum::with_var_edits(
             self.path,
-            self.var_edits.into_iter()
-                .map(|VarEdit{identifier, value}| (identifier.to_string(), value.into()))
-                .collect()
+            self.var_edits
+                .into_iter()
+                .map(|VarEdit { identifier, value }| (identifier.to_string(), value.into()))
+                .collect(),
         )
     }
 }

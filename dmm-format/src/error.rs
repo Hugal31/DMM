@@ -8,7 +8,7 @@ pub enum Error {
     Custom(String),
     /// Trailing character after the data
     TrailingCharacters,
-    Nom(nom::ErrorKind)
+    Nom(nom::ErrorKind),
 }
 
 impl Display for Error {

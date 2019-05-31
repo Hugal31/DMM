@@ -1,8 +1,4 @@
-use nom::{
-    alpha,
-    named, char, delimited, sep,
-    types::CompleteStr
-};
+use nom::{alpha, char, delimited, named, sep, types::CompleteStr};
 
 use super::{Datum, DictionaryEntry};
 
@@ -45,24 +41,39 @@ mod tests {
     fn test_parse_dictionary_entry() {
         assert_eq!(
             parse_dictionary_entry(CompleteStr("\"aaB\" = (  )")),
-            Ok((CompleteStr(""), DictionaryEntry {
-                key: "aaB",
-                datums: Vec::new(),
-            }))
+            Ok((
+                CompleteStr(""),
+                DictionaryEntry {
+                    key: "aaB",
+                    datums: Vec::new(),
+                }
+            ))
         );
     }
 
     #[test]
     fn test_parse_datums_block() {
-        assert_eq!(parse_datums_block(CompleteStr("(  )")), Ok((CompleteStr(""), Vec::new())));
+        assert_eq!(
+            parse_datums_block(CompleteStr("(  )")),
+            Ok((CompleteStr(""), Vec::new()))
+        );
         assert_eq!(
             parse_datums_block(CompleteStr("(   /foo/bar    )")),
-            Ok((CompleteStr(""), vec![Datum{path: "/foo/bar", var_edits: Vec::new()}]))
+            Ok((
+                CompleteStr(""),
+                vec![Datum {
+                    path: "/foo/bar",
+                    var_edits: Vec::new()
+                }]
+            ))
         );
     }
 
     #[test]
     fn test_parse_key() {
-        assert_eq!(parse_key(CompleteStr("\"abC\"")), Ok((CompleteStr(""), CompleteStr("abC"))));
+        assert_eq!(
+            parse_key(CompleteStr("\"abC\"")),
+            Ok((CompleteStr(""), CompleteStr("abC")))
+        );
     }
 }

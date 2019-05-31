@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use dmm::Datum;
+use std::collections::HashMap;
 
 #[test]
 fn test_parse() {
@@ -24,21 +24,30 @@ aab
         Ok(dmm::DMM::new(
             {
                 let mut m = HashMap::new();
-                m.insert(0.into(), vec![
-                    Datum::new("/turf/open/space/basic"),
-                    Datum::new("/area/space"),
-                ]);
-                m.insert(1.into(), vec![
-                    Datum::with_var_edits("/obj/machinery/firealarm", vec![
-                        ("dir".to_string(), dmm::Literal::Number(8)),
-                        ("name".to_string(), dmm::Literal::Str("thing".to_string()))
-                    ].into_iter().collect()),
-                ]);
+                m.insert(
+                    0.into(),
+                    vec![
+                        Datum::new("/turf/open/space/basic"),
+                        Datum::new("/area/space"),
+                    ],
+                );
+                m.insert(
+                    1.into(),
+                    vec![Datum::with_var_edits(
+                        "/obj/machinery/firealarm",
+                        vec![
+                            ("dir".to_string(), dmm::Literal::Number(8)),
+                            ("name".to_string(), dmm::Literal::Str("thing".to_string())),
+                        ]
+                        .into_iter()
+                        .collect(),
+                    )],
+                );
                 m
             },
             {
                 let mut m = HashMap::new();
-                m.insert((1,1,1), vec![0.into(), 1.into()]);
+                m.insert((1, 1, 1), vec![0.into(), 1.into()]);
                 m
             }
         ))

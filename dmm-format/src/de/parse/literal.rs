@@ -1,9 +1,8 @@
 use std::str::FromStr;
 
 use nom::{
-    digit,
-    alt, value, named, map_res, char, delimited, escaped_transform, none_of, do_parse, opt, tag, recognize, flat_map, call, parse_to, tuple,
-    types::CompleteStr
+    alt, call, char, delimited, digit, do_parse, escaped_transform, flat_map, map_res, named,
+    none_of, opt, parse_to, recognize, tag, tuple, types::CompleteStr, value,
 };
 
 use super::Literal;
@@ -69,28 +68,55 @@ mod tests {
 
     #[test]
     fn test_parse_number() {
-        assert_eq!(parse_literal(CompleteStr("123")), Ok((CompleteStr(""), Literal::Number(123))));
-        assert_eq!(parse_literal(CompleteStr("-1")), Ok((CompleteStr(""), Literal::Number(-1))));
+        assert_eq!(
+            parse_literal(CompleteStr("123")),
+            Ok((CompleteStr(""), Literal::Number(123)))
+        );
+        assert_eq!(
+            parse_literal(CompleteStr("-1")),
+            Ok((CompleteStr(""), Literal::Number(-1)))
+        );
     }
 
     #[test]
     fn test_parse_float() {
-        assert_eq!(parse_literal(CompleteStr("123.2")), Ok((CompleteStr(""), Literal::Float(123.2))));
-        assert_eq!(parse_literal(CompleteStr("-1.2")), Ok((CompleteStr(""), Literal::Float(-1.2))));
-        assert_eq!(parse_literal(CompleteStr("-1.2E-1")), Ok((CompleteStr(""), Literal::Float(-1.2E-1))));
-        assert_eq!(parse_literal(CompleteStr("42.e+1")), Ok((CompleteStr(""), Literal::Float(42e+1))));
-        assert_eq!(parse_literal(CompleteStr(".2e1")), Ok((CompleteStr(""), Literal::Float(0.2e1))));
+        assert_eq!(
+            parse_literal(CompleteStr("123.2")),
+            Ok((CompleteStr(""), Literal::Float(123.2)))
+        );
+        assert_eq!(
+            parse_literal(CompleteStr("-1.2")),
+            Ok((CompleteStr(""), Literal::Float(-1.2)))
+        );
+        assert_eq!(
+            parse_literal(CompleteStr("-1.2E-1")),
+            Ok((CompleteStr(""), Literal::Float(-1.2E-1)))
+        );
+        assert_eq!(
+            parse_literal(CompleteStr("42.e+1")),
+            Ok((CompleteStr(""), Literal::Float(42e+1)))
+        );
+        assert_eq!(
+            parse_literal(CompleteStr(".2e1")),
+            Ok((CompleteStr(""), Literal::Float(0.2e1)))
+        );
     }
 
     #[test]
     fn test_parse_string() {
         assert_eq!(
             parse_literal(CompleteStr("\"This is a string\"")),
-            Ok((CompleteStr(""), Literal::Str("This is a string".to_string())))
+            Ok((
+                CompleteStr(""),
+                Literal::Str("This is a string".to_string())
+            ))
         );
         assert_eq!(
             parse_literal(CompleteStr("\"This is an \\\"escaped\\nstring\"")),
-            Ok((CompleteStr(""), Literal::Str("This is an \"escaped\nstring".to_string())))
+            Ok((
+                CompleteStr(""),
+                Literal::Str("This is an \"escaped\nstring".to_string())
+            ))
         );
     }
 }

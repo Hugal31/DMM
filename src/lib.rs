@@ -3,6 +3,51 @@ use std::collections::HashMap;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+// TODO: Rework this
+struct GridIterator<'d> {
+    dmm: &'d DMM,
+    grid_iter: std::collections::hash_map::Iter<'d, (u32, u32, u32), Vec<Key>>,
+    cell_iter: Option<std::slice::Iter<'d, Key>>,
+    current_coords: Option<(u32, u32, u32)>,
+}
+
+impl<'d> GridIterator<'d> {
+    fn new(dmm: &'d DMM) -> Self {
+        let mut grid_iter = dmm.grid.iter();
+        let (current_coords, cell_iter) = grid_iter
+            .next()
+            .map(|l| (Some(*l.0), Some(l.1.iter())))
+            .unwrap_or((None, None));
+        GridIterator {
+            dmm,
+            grid_iter,
+            cell_iter,
+            current_coords,
+        }
+    }
+}
+
+impl<'d> Iterator for GridIterator<'d> {
+    type Item = ((u32, u32, u32), &'d [Datum]);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let coords = self.current_coords.as_mut()?;
+        let new_coords = *coords;
+        coords.2 += 1;
+        let cell_iter = self.cell_iter.as_mut()?;
+        if let Some(key) = cell_iter.next() {
+            Some((new_coords, self.dmm.dictionary.get(key).unwrap()))
+        } else if let Some(next_cell) = self.grid_iter.next() {
+            self.current_coords = Some(*next_cell.0);
+            self.cell_iter = Some(next_cell.1.iter());
+            self.next()
+        } else {
+            self.current_coords = None;
+            None
+        }
+    }
+}
+
 /// DMM structure as it can be found in files
 #[derive(Clone, Debug, Default, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
@@ -12,11 +57,16 @@ pub struct DMM {
 }
 
 impl DMM {
-    pub fn new(dictionary: HashMap<Key, Vec<Datum>>, grid: HashMap<(u32, u32, u32), Vec<Key>>) -> Self {
-        DMM {
-            dictionary,
-            grid,
-        }
+    pub fn new(
+        dictionary: HashMap<Key, Vec<Datum>>,
+        grid: HashMap<(u32, u32, u32), Vec<Key>>,
+    ) -> Self {
+        // TODO Check every key exists
+        DMM { dictionary, grid }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = ((u32, u32, u32), &[Datum])> {
+        GridIterator::new(self)
     }
 }
 
@@ -83,7 +133,7 @@ impl std::convert::TryFrom<&'_ str> for Key {
     type Error = ();
 
     fn try_from(v: &str) -> Result<Self, Self::Error> {
-        if v.len() == 0 || v.len() > Self::MAX_KEY_CHAR {
+        if v.is_empty() || v.len() > Self::MAX_KEY_CHAR {
             return Err(());
         }
 
@@ -142,7 +192,7 @@ mod serde_impls {
 
             while num != 0 {
                 let index = num as usize % Self::BASE.len();
-                result.insert_str(0, Self::BASE.get(index..index + 1).unwrap());
+                result.insert_str(0, Self::BASE.get(index..=index).unwrap());
                 num /= Self::BASE.len() as u32;
             }
 
@@ -168,8 +218,10 @@ mod serde_impls {
             )
         }
 
-        fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E> where
-            E: Error, {
+        fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
+        where
+            E: Error,
+        {
             if v >= 0 {
                 self.visit_u64(v as u64)
             } else {
@@ -177,14 +229,18 @@ mod serde_impls {
             }
         }
 
-        fn visit_u32<E>(self, v: u32) -> Result<Self::Value, E> where
-            E: Error, {
+        fn visit_u32<E>(self, v: u32) -> Result<Self::Value, E>
+        where
+            E: Error,
+        {
             Ok(Key(v))
         }
 
-        fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E> where
-            E: Error, {
-            if v <= std::u32::MAX as u64 {
+        fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+        where
+            E: Error,
+        {
+            if v <= u64::from(std::u32::MAX) {
                 self.visit_u32(v as u32)
             } else {
                 Err(E::invalid_value(Unexpected::Unsigned(v), &self))
@@ -195,7 +251,7 @@ mod serde_impls {
         where
             E: Error,
         {
-            if v.len() == 0 || v.len() > Self::MAX_KEY_CHAR {
+            if v.is_empty() || v.len() > Self::MAX_KEY_CHAR {
                 return Err(E::invalid_length(v.len(), &self));
             }
 
@@ -230,5 +286,80 @@ mod serde_impls {
                 &[Token::Str("ZZZ")],
             );
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_iterator() {
+        let dmm = DMM::new(
+            {
+                let mut m = HashMap::new();
+                m.insert(
+                    0.into(),
+                    vec![
+                        Datum::new("/turf/open/space/basic"),
+                        Datum::new("/area/space"),
+                    ],
+                );
+                m.insert(
+                    1.into(),
+                    vec![Datum::with_var_edits(
+                        "/obj/machinery/firealarm",
+                        vec![
+                            ("dir".to_string(), Literal::Number(8)),
+                            ("name".to_string(), Literal::Str("thing".to_string())),
+                        ]
+                        .into_iter()
+                        .collect(),
+                    )],
+                );
+                m
+            },
+            {
+                let mut m = HashMap::new();
+                m.insert((1, 1, 1), vec![0.into(), 1.into()]);
+                m.insert((2, 1, 1), vec![0.into()]);
+                m
+            },
+        );
+        let mut iterator = dmm.iter();
+
+        assert_eq!(
+            iterator.collect::<HashMap<(u32, u32, u32), &[Datum]>>(),
+            vec![
+                (
+                    (1, 1, 1),
+                    &[
+                        Datum::new("/turf/open/space/basic"),
+                        Datum::new("/area/space"),
+                    ][..]
+                ),
+                (
+                    (1, 1, 2),
+                    &[Datum::with_var_edits(
+                        "/obj/machinery/firealarm",
+                        vec![
+                            ("dir".to_string(), Literal::Number(8)),
+                            ("name".to_string(), Literal::Str("thing".to_string()))
+                        ]
+                        .into_iter()
+                        .collect()
+                    ),][..]
+                ),
+                (
+                    (2, 1, 1),
+                    &[
+                        Datum::new("/turf/open/space/basic"),
+                        Datum::new("/area/space"),
+                    ][..]
+                ),
+            ]
+            .into_iter()
+            .collect()
+        )
     }
 }
