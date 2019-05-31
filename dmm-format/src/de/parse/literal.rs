@@ -2,15 +2,15 @@ use std::str::FromStr;
 
 use nom::{
     alt, call, char, delimited, digit, do_parse, escaped_transform, flat_map, map_res, named,
-    none_of, opt, parse_to, recognize, tag, tuple, types::CompleteStr, value,
+    none_of, not, one_of, opt, parse_to, recognize, tag, tuple, types::CompleteStr, value,
 };
 
 use super::Literal;
 
 named!(pub parse_literal<CompleteStr, Literal>,
     alt!(
-        parse_float    => { |f| Literal::Float(f) }
-        | parse_number => { |i| Literal::Number(i) }
+        tuple!(parse_number, not!(one_of!("Ee."))) => { |(i, _)| Literal::Number(i) }
+        | parse_float    => { |f| Literal::Float(f) }
         | parse_string => { |s| Literal::Str(s) }
     )
 );
@@ -49,7 +49,7 @@ named!(recognize_float<CompleteStr, CompleteStr>,
     recognize!(tuple!(
       opt!(alt!(char!('+') | char!('-'))),
       alt!(
-        value!((), tuple!(digit, char!('.'), opt!(digit)))
+        value!((), tuple!(digit, opt!(tuple!(char!('.'), opt!(digit)))))
       | value!((), tuple!(char!('.'), digit))
       ),
       opt!(tuple!(
@@ -99,6 +99,10 @@ mod tests {
         assert_eq!(
             parse_literal(CompleteStr(".2e1")),
             Ok((CompleteStr(""), Literal::Float(0.2e1)))
+        );
+        assert_eq!(
+            parse_literal(CompleteStr("5e+006")),
+            Ok((CompleteStr(""), Literal::Float(5.0e6)))
         );
     }
 

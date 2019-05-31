@@ -2,7 +2,7 @@ use dmm::Datum;
 use std::collections::HashMap;
 
 #[test]
-fn test_parse() {
+fn test_parse_str() {
     let source = r#"// Comment
 "aaa" = (
 /turf/open/space/basic,
@@ -20,8 +20,8 @@ aab
 "}
 "#;
     assert_eq!(
-        dmm_format::from_str(source),
-        Ok(dmm::DMM::new(
+        dmm_format::from_str(source).expect("Should have parsed"),
+        dmm::DMM::new(
             {
                 let mut m = HashMap::new();
                 m.insert(
@@ -50,6 +50,12 @@ aab
                 m.insert((1, 1, 1), vec![0.into(), 1.into()]);
                 m
             }
-        ))
+        )
     );
+}
+
+#[test]
+fn test_parse_reader() {
+    let file = std::fs::File::open("tests/multiz.dmm").expect("file should be here");
+    assert!(dbg!(dmm_format::from_reader(file)).is_ok());
 }

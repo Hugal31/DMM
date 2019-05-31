@@ -2,7 +2,7 @@ use std::convert::TryInto;
 
 use nom::{
     alt, char, many0, many1, map, named, none_of, one_of, opt, preceded, tag, tuple,
-    types::CompleteStr,
+    types::CompleteStr, value,
 };
 
 named!(newline<CompleteStr, ()>,
@@ -19,10 +19,10 @@ named!(newline<CompleteStr, ()>,
 );
 
 named!(spaces_nl<CompleteStr, ()>,
-  map!(many0!(alt!(one_of!(" \t\x0c") => { |_|() } | newline)), |_| ())
+  value!((), many0!(alt!(one_of!(" \t\x0c") => { |_|() } | newline)))
 );
 named!(spaces_nonl<CompleteStr, ()>,
-  map!(many0!(one_of!(" \t\x0c")), |_| ())
+  value!((), many0!(one_of!(" \t\x0c")))
 );
 
 /// Like `ws!()`, but ignores comments as well
@@ -101,7 +101,10 @@ impl Into<::dmm::DMM> for DMM<'_> {
                 .map(|de| {
                     (
                         de.key.try_into().unwrap(),
-                        de.datums.into_iter().map(std::convert::Into::into).collect(),
+                        de.datums
+                            .into_iter()
+                            .map(std::convert::Into::into)
+                            .collect(),
                     )
                 })
                 .collect(),

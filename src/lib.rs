@@ -33,7 +33,7 @@ impl<'d> Iterator for GridIterator<'d> {
     fn next(&mut self) -> Option<Self::Item> {
         let coords = self.current_coords.as_mut()?;
         let new_coords = *coords;
-        coords.2 += 1;
+        coords.1 += 1;
         let cell_iter = self.cell_iter.as_mut()?;
         if let Some(key) = cell_iter.next() {
             Some((new_coords, self.dmm.dictionary.get(key).unwrap()))
@@ -339,7 +339,7 @@ mod tests {
                     ][..]
                 ),
                 (
-                    (1, 1, 2),
+                    (1, 2, 1),
                     &[Datum::with_var_edits(
                         "/obj/machinery/firealarm",
                         vec![

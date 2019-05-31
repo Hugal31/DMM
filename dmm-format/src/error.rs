@@ -1,14 +1,16 @@
 use std;
 use std::fmt::{self, Display};
+use std::io;
 
 pub type Result<T> = ::std::result::Result<T, Error>;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug)]
 pub enum Error {
     Custom(String),
     /// Trailing character after the data
     TrailingCharacters,
     Nom(nom::ErrorKind),
+    Io(io::Error),
 }
 
 impl Display for Error {
@@ -23,6 +25,7 @@ impl std::error::Error for Error {
             Error::Custom(ref msg) => msg,
             Error::TrailingCharacters => "unexpected trailing characters after the data",
             Error::Nom(ref e) => e.description(),
+            Error::Io(ref e) => e.description(),
         }
     }
 }

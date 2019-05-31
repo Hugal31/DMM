@@ -1,4 +1,6 @@
-use nom::{alpha, char, digit, map, map_res, named, tag, types::CompleteStr};
+use nom::{
+    alpha, char, digit, eat_separator, map, map_res, named, sep, tag, types::CompleteStr, value,
+};
 
 use super::dictionary::parse_dictionary_entry;
 use super::{DictionaryEntry, GridEntry, DMM};
@@ -53,10 +55,12 @@ named!(parse_grid_keys<CompleteStr, Vec<&str>>,
     )
 );
 
+named!(eat_comma<CompleteStr, ()>,
+       value!((), eat_separator!(","))
+);
+
 named!(parse_dictionary<CompleteStr, Vec<DictionaryEntry>>,
-    ws_comm!(
-        separated_list!(char!(','), parse_dictionary_entry)
-    )
+    ws_comm!(sep!(eat_comma, many0!(parse_dictionary_entry)))
 );
 
 #[cfg(test)]
@@ -116,21 +120,27 @@ mod tests {
 
     #[test]
     fn test_parse_dictionary() {
+        let result = Ok((
+            CompleteStr("(1,2,3)"),
+            vec![
+                DictionaryEntry {
+                    key: "aaB",
+                    datums: Vec::new(),
+                },
+                DictionaryEntry {
+                    key: "aaC",
+                    datums: Vec::new(),
+                },
+            ],
+        ));
         assert_eq!(
             parse_dictionary(CompleteStr("\"aaB\" = (  ), \"aaC\" = () (1,2,3)")),
-            Ok((
-                CompleteStr("(1,2,3)"),
-                vec![
-                    DictionaryEntry {
-                        key: "aaB",
-                        datums: Vec::new(),
-                    },
-                    DictionaryEntry {
-                        key: "aaC",
-                        datums: Vec::new(),
-                    }
-                ]
-            ))
+            result
+        );
+        // Without comma
+        assert_eq!(
+            parse_dictionary(CompleteStr("\"aaB\" = (  ) \"aaC\" = () (1,2,3)")),
+            result
         );
     }
 }
