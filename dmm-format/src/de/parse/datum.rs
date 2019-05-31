@@ -8,7 +8,7 @@ named!(pub parse_datum<CompleteStr, Datum>,
         do_parse!(
             path: parse_path >>
             var_edits: opt!(parse_data_block) >>
-            (Datum { path: path.0, var_edits: var_edits.unwrap_or(Vec::new()) })
+            (Datum { path: path.0, var_edits: var_edits.unwrap_or_default() })
         )
     )
 );

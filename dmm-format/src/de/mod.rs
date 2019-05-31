@@ -10,11 +10,10 @@ pub fn from_str(input: &str) -> Result<::dmm::DMM> {
         .map_err(|e| Error::Nom(e.into_error_kind()))
         .and_then(|(remaining, dmm)| {
             if !remaining.0.trim_end().is_empty() {
-                dbg!((remaining.0, dmm));
                 Err(Error::TrailingCharacters)
             } else {
                 Ok(dmm)
             }
         })
-        .map(|dmm| dmm.into())
+        .map(std::convert::Into::into)
 }

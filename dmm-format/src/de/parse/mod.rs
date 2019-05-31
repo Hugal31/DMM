@@ -101,7 +101,7 @@ impl Into<::dmm::DMM> for DMM<'_> {
                 .map(|de| {
                     (
                         de.key.try_into().unwrap(),
-                        de.datums.into_iter().map(|d| d.into()).collect(),
+                        de.datums.into_iter().map(std::convert::Into::into).collect(),
                     )
                 })
                 .collect(),
