@@ -1,8 +1,6 @@
 use std;
 use std::fmt::{self, Display};
 
-use serde::{ser, de};
-
 pub type Result<T> = ::std::result::Result<T, Error>;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -10,18 +8,7 @@ pub enum Error {
     Custom(String),
     /// Trailing character after the data
     TrailingCharacters,
-}
-
-impl ser::Error for Error {
-    fn custom<T: Display>(msg: T) -> Self {
-        Error::Custom(msg.to_string())
-    }
-}
-
-impl de::Error for Error {
-    fn custom<T: Display>(msg: T) -> Self {
-        Error::Custom(msg.to_string())
-    }
+    Nom(nom::ErrorKind)
 }
 
 impl Display for Error {
@@ -35,6 +22,7 @@ impl std::error::Error for Error {
         match *self {
             Error::Custom(ref msg) => msg,
             Error::TrailingCharacters => "unexpected trailing characters after the data",
+            Error::Nom(ref e) => e.description(),
         }
     }
 }

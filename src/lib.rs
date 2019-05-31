@@ -4,11 +4,20 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 /// DMM structure as it can be found in files
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct DMM {
     dictionary: HashMap<Key, Vec<Datum>>,
     grid: HashMap<(u32, u32, u32), Vec<Key>>,
+}
+
+impl DMM {
+    pub fn new(dictionary: HashMap<Key, Vec<Datum>>, grid: HashMap<(u32, u32, u32), Vec<Key>>) -> Self {
+        DMM {
+            dictionary,
+            grid,
+        }
+    }
 }
 
 /// In a DMM, a Datum is represented by its path (type) and a list of assigns to its var.
@@ -19,17 +28,30 @@ pub struct DMM {
 ///        pixel_x = 24
 ///        }
 /// ```
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct Datum {
     /// Path, or the type of the datum
     path: String,
     /// List of assignments to the datum instance
-    assigns: HashMap<String, Literal>,
+    var_edits: HashMap<String, Literal>,
+}
+
+impl Datum {
+    pub fn new<S: Into<String>>(path: S) -> Self {
+        Self::with_var_edits(path, HashMap::new())
+    }
+
+    pub fn with_var_edits<S: Into<String>>(path: S, var_edits: HashMap<String, Literal>) -> Self {
+        Datum {
+            path: path.into(),
+            var_edits,
+        }
+    }
 }
 
 /// DMM Literal
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[cfg_attr(feature = "serde", serde(untagged))]
 pub enum Literal {
@@ -39,7 +61,45 @@ pub enum Literal {
 }
 
 #[derive(Clone, Copy, Debug, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
-struct Key(u32);
+pub struct Key(u32);
+
+impl Key {
+    const MAX_KEY_CHAR: usize = 3;
+    const BASE: &'static str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    pub fn new(k: u32) -> Self {
+        Key(k)
+    }
+}
+
+impl From<u32> for Key {
+    fn from(k: u32) -> Self {
+        Key::new(k)
+    }
+}
+
+// TODO Refactor with KeyStrConverter, make a real error
+impl std::convert::TryFrom<&'_ str> for Key {
+    type Error = ();
+
+    fn try_from(v: &str) -> Result<Self, Self::Error> {
+        if v.len() == 0 || v.len() > Self::MAX_KEY_CHAR {
+            return Err(());
+        }
+
+        let mut value = 0;
+
+        for c in v.chars() {
+            if let Some(index) = Self::BASE.find(c) {
+                value = Self::BASE.len() as u32 * value + index as u32;
+            } else {
+                return Err(());
+            }
+        }
+
+        Ok(Key(value))
+    }
+}
 
 #[cfg(feature = "serde")]
 mod serde_impls {
@@ -100,18 +160,41 @@ mod serde_impls {
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
             write!(
                 formatter,
-                "a string of maximum {} characters within {}",
+                "a number between {} and {}, or a string of maximum {} characters within {}",
+                std::u32::MIN,
+                std::u32::MAX,
                 Self::MAX_KEY_CHAR,
                 Self::BASE
             )
+        }
+
+        fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E> where
+            E: Error, {
+            if v >= 0 {
+                self.visit_u64(v as u64)
+            } else {
+                Err(E::invalid_value(Unexpected::Signed(v), &self))
+            }
+        }
+
+        fn visit_u32<E>(self, v: u32) -> Result<Self::Value, E> where
+            E: Error, {
+            Ok(Key(v))
+        }
+
+        fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E> where
+            E: Error, {
+            if v <= std::u32::MAX as u64 {
+                self.visit_u32(v as u32)
+            } else {
+                Err(E::invalid_value(Unexpected::Unsigned(v), &self))
+            }
         }
 
         fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
         where
             E: Error,
         {
-            debug_assert_eq!(52, Self::BASE.len());
-
             if v.len() == 0 || v.len() > Self::MAX_KEY_CHAR {
                 return Err(E::invalid_length(v.len(), &self));
             }

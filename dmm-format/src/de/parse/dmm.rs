@@ -1,6 +1,7 @@
 use nom::{
     alpha,
     digit,
+    named, do_parse, many0, char, tag, map, map_res,
     types::CompleteStr
 };
 
@@ -8,15 +9,15 @@ use super::{DMM, DictionaryEntry, GridEntry};
 use super::dictionary::parse_dictionary_entry;
 
 named!(pub parse_dmm<CompleteStr, DMM>,
-   do_parse!(
+   ws_comm!(do_parse!(
        dictionary: parse_dictionary >>
        grid: parse_grid >>
        (DMM { dictionary, grid })
-   )
+   ))
 );
 
 named!(parse_grid<CompleteStr, Vec<GridEntry>>,
-    many0!(parse_grid_entry)
+    ws_comm!(many0!(parse_grid_entry))
 );
 
 named!(parse_grid_entry<CompleteStr, GridEntry>,

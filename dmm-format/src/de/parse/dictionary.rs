@@ -1,5 +1,6 @@
 use nom::{
     alpha,
+    named, char, delimited, sep,
     types::CompleteStr
 };
 
@@ -22,7 +23,7 @@ named!(parse_datums_block<CompleteStr, Vec<Datum>>,
     ws_comm!(
         delimited!(
             char!('('),
-            many0!(parse_datum),
+            separated_list!(char!(','), parse_datum),
             char!(')')
         )
     )

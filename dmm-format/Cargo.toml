@@ -1,0 +1,9 @@
+[package]
+name = "dmm-format"
+version = "0.1.0"
+authors = ["Hugo Laloge <hugo.laloge@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+dmm = { path = ".." }
+nom = { version = "4", features = ["verbose-errors"] }

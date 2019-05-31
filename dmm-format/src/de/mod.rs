@@ -1,38 +1,27 @@
 mod parse;
 
-use serde::de::{
-    self, Deserialize, DeserializeSeed, EnumAccess, IntoDeserializer, MapAccess, SeqAccess,
-    VariantAccess, Visitor,
-};
-
 use crate::error::{Error, Result};
+use self::parse::*;
+use nom::types::CompleteStr;
 
-pub struct Deserializer<'de> {
-    input: &'de str,
+pub fn from_str(input: &str) -> Result<::dmm::DMM> {
+    dbg!(input);
+    parse_dmm(CompleteStr(input))
+        .map_err(|e| Error::Nom(e.into_error_kind()))
+        .and_then(|(remaining, dmm)| {
+            if !remaining.0.trim_end().is_empty() {
+                dbg!((remaining.0, dmm));
+                Err(Error::TrailingCharacters)
+            } else {
+                Ok(dmm)
+            }
+        })
+        .map(|dmm| dmm.into())
 }
 
-impl<'de> Deserializer<'de> {
-    pub fn from_str(input: &'de str) -> Self {
-        Deserializer {
-            input
-        }
-    }
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
 
-/*pub fn from_str<'a, T>(s: &'a str) -> Result<T>
-    where
-        T: Deserialize<'a>,
-{
-    let mut deserializer = Deserializer::from_str(s);
-    let t = T::deserialize(&mut deserializer)?;
-    if deserializer.input.is_empty() {
-        Ok(t)
-    } else {
-        Err(Error::TrailingCharacters)
-    }
 }
-
-impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
-    type Error = Error;
-}
-*/

@@ -1,3 +1,10 @@
+use std::convert::TryInto;
+
+use nom::{
+    alt, char, named, map, many1, tuple, opt, preceded, tag, many0, none_of, one_of,
+    types::CompleteStr,
+};
+
 named!(newline<CompleteStr, ()>,
   map!(
     many1!(
@@ -25,6 +32,7 @@ macro_rules! ws_comm (
     {
       use nom::Convert;
       use nom::Err;
+      use nom::sep;
 
       match sep!($i, $crate::de::parse::spaces_nl, $($args)*) {
         Err(e) => Err(e),
@@ -44,6 +52,9 @@ mod dmm;
 mod dictionary;
 mod literal;
 mod var_edit;
+
+pub use self::dmm::parse_dmm;
+use std::collections::HashMap;
 
 /// Parsed DMM AST
 #[derive(Clone, Debug, PartialEq)]
@@ -84,4 +95,36 @@ pub struct GridEntry<'s> {
     pub keys: Vec<&'s str>,
 }
 
-use nom::types::CompleteStr;
+impl Into<::dmm::DMM> for DMM<'_> {
+    fn into(self) -> ::dmm::DMM {
+        ::dmm::DMM::new(
+            self.dictionary.into_iter()
+                .map(|de| (de.key.try_into().unwrap(), de.datums.into_iter().map(|d| d.into()).collect()))
+                .collect(),
+            self.grid.into_iter()
+                .map(|GridEntry{coords, keys}| (coords, keys.into_iter().map(|k| k.try_into().unwrap()).collect()))
+                .collect()
+        )
+    }
+}
+
+impl Into<::dmm::Datum> for Datum<'_> {
+    fn into(self) -> ::dmm::Datum {
+        ::dmm::Datum::with_var_edits(
+            self.path,
+            self.var_edits.into_iter()
+                .map(|VarEdit{identifier, value}| (identifier.to_string(), value.into()))
+                .collect()
+        )
+    }
+}
+
+impl Into<::dmm::Literal> for Literal {
+    fn into(self) -> ::dmm::Literal {
+        match self {
+            Literal::Float(f) => ::dmm::Literal::Float(f),
+            Literal::Number(n) => ::dmm::Literal::Number(n),
+            Literal::Str(s) => ::dmm::Literal::Str(s),
+        }
+    }
+}
