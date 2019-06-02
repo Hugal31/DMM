@@ -98,13 +98,21 @@ impl Datum {
             var_edits,
         }
     }
+
+    pub fn path(&self) -> &str {
+        &self.path
+    }
+
+    pub fn var_edits(&self) -> &HashMap<String, Literal> {
+        &self.var_edits
+    }
 }
 
 /// DMM Literal
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
-#[cfg_attr(feature = "serde", serde(untagged))]
 pub enum Literal {
+    Path(String),
     Str(String),
     Number(i64),
     Float(f64),

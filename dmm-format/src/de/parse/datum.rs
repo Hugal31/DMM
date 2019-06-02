@@ -1,5 +1,6 @@
-use nom::{char, named, opt, recognize, sep, take_while, tuple, types::CompleteStr};
+use nom::{char, named, opt, sep, types::CompleteStr};
 
+use super::literal::parse_path;
 use super::var_edit::parse_var_edit;
 use super::{Datum, VarEdit};
 
@@ -12,22 +13,6 @@ named!(pub parse_datum<CompleteStr, Datum>,
         )
     )
 );
-
-named!(parse_path<CompleteStr, CompleteStr>,
-    recognize!(
-        tuple!(
-            char!('/'),
-            take_while!(is_path_char)
-        )
-    )
-);
-
-fn is_path_char(c: char) -> bool {
-    match c {
-        'a'..='z' | 'A'..='Z' | '0'..='9' | '/' | '_' => true,
-        _ => false,
-    }
-}
 
 named!(parse_data_block<CompleteStr, Vec<VarEdit>>,
     ws_comm!(
@@ -53,8 +38,8 @@ mod tests {
     #[test]
     fn test_parse_path() {
         assert_eq!(
-            parse_path(CompleteStr("/foo/bar")),
-            Ok((CompleteStr(""), CompleteStr("/foo/bar")))
+            parse_path(CompleteStr("/foo/bar123")),
+            Ok((CompleteStr(""), CompleteStr("/foo/bar123")))
         );
         assert!(parse_path(CompleteStr("foo/bar")).is_err());
     }

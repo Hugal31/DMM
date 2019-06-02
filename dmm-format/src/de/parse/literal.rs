@@ -2,7 +2,8 @@ use std::str::FromStr;
 
 use nom::{
     alt, call, char, delimited, digit, do_parse, escaped_transform, flat_map, map_res, named,
-    none_of, not, one_of, opt, parse_to, recognize, tag, tuple, types::CompleteStr, value,
+    none_of, not, one_of, opt, parse_to, recognize, tag, take_while, tuple, types::CompleteStr,
+    value,
 };
 
 use super::Literal;
@@ -12,6 +13,10 @@ named!(pub parse_literal<CompleteStr, Literal>,
         tuple!(parse_number, not!(one_of!("Ee."))) => { |(i, _)| Literal::Number(i) }
         | parse_float    => { |f| Literal::Float(f) }
         | parse_string => { |s| Literal::Str(s) }
+        | parse_path   => { |p: CompleteStr| Literal::Path(p.0.to_string()) }
+        // TODO
+        | tag!("null") => { |_| Literal::Str("null".to_string()) }
+        | recognize!(parse_list)=> { |p: CompleteStr| Literal::Str(p.0.to_string()) }
     )
 );
 
@@ -27,6 +32,10 @@ named!(parse_number<CompleteStr, i64>,
 );
 
 named!(parse_string<CompleteStr, String>,
+       alt!(parse_double_quoted_string | parse_single_quoted_string)
+);
+
+named!(parse_double_quoted_string<CompleteStr, String>,
     delimited!(
         char!('"'),
         escaped_transform!(none_of!("\\\""), '\\',
@@ -34,9 +43,25 @@ named!(parse_string<CompleteStr, String>,
                 char!('\\') => { |_| "\\" }
                 | char!('"') => { |_| "\"" }
                 | char!('n') => { |_| "\n" }
+                | char!('i') => { |_| "\\i" }
             )
         ),
         char!('"')
+    )
+);
+
+named!(parse_single_quoted_string<CompleteStr, String>,
+    delimited!(
+        char!('\''),
+        escaped_transform!(none_of!("\\'"), '\\',
+            alt!(
+                char!('\\') => { |_| "\\" }
+                | char!('\'') => { |_| "'" }
+                | char!('n') => { |_| "\n" }
+                | char!('i') => { |_| "\\i" }
+            )
+        ),
+        char!('\'')
     )
 );
 
@@ -60,6 +85,26 @@ named!(recognize_float<CompleteStr, CompleteStr>,
       )
     )
   )
+);
+
+named!(pub parse_path<CompleteStr, CompleteStr>,
+    recognize!(
+        tuple!(
+            char!('/'),
+            take_while!(is_path_char)
+        )
+    )
+);
+
+fn is_path_char(c: char) -> bool {
+    match c {
+        'a'..='z' | 'A'..='Z' | '0'..='9' | '/' | '_' => true,
+        _ => false,
+    }
+}
+
+named!(pub parse_list<CompleteStr, Vec<Literal>>,
+    ws_comm!(delimited!(tag!("list("), separated_list!(char!(','), parse_literal), char!(')')))
 );
 
 #[cfg(test)]

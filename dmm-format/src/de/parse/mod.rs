@@ -81,6 +81,7 @@ pub struct VarEdit<'s> {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Literal {
+    Path(String),
     /// Not a reference because it could have been escaped
     Str(String),
     Number(i64),
@@ -138,6 +139,7 @@ impl Into<::dmm::Literal> for Literal {
         match self {
             Literal::Float(f) => ::dmm::Literal::Float(f),
             Literal::Number(n) => ::dmm::Literal::Number(n),
+            Literal::Path(p) => ::dmm::Literal::Path(p),
             Literal::Str(s) => ::dmm::Literal::Str(s),
         }
     }

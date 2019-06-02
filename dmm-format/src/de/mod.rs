@@ -9,7 +9,7 @@ use crate::error::{Error, Result};
 
 pub fn from_reader<R: Read>(mut input: R) -> Result<::dmm::DMM> {
     let mut s = String::new();
-    input.read_to_string(&mut s).map_err(|e| Error::Io(e))?;
+    input.read_to_string(&mut s).map_err(Error::Io)?;
     from_str(&s)
 }
 
