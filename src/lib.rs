@@ -106,6 +106,10 @@ impl Datum {
     pub fn var_edits(&self) -> &HashMap<String, Literal> {
         &self.var_edits
     }
+
+    pub fn var_edit(&self, var: &str) -> Option<&Literal> {
+        self.var_edits.get(var)
+    }
 }
 
 /// DMM Literal
