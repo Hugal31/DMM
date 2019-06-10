@@ -11,6 +11,7 @@ named!(newline<CompleteStr, ()>,
       tuple!(
         spaces_nonl,
         opt!(preceded!(tag!("//"), many0!(none_of!("\n")))),
+        opt!(char!('\r')),
         char!('\n')
       )
     ),

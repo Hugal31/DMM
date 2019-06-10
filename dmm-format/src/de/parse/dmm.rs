@@ -70,7 +70,7 @@ mod tests {
     #[test]
     fn test_parse_dmm() {
         assert_eq!(
-            parse_dmm(CompleteStr("// COMMENT\n\"aaB\" = ( //OTHER COMMENT\n ), \"aaC\" = ()\n(1,2,3) = {\"aaa\nbbb\"}\n(2,3,4) = {\"aac\nbbc\"}")),
+            parse_dmm(CompleteStr("// COMMENT\n\"aaB\" = ( //OTHER COMMENT\n ), \"aaC\" = ()\n(1,2,3) = {\"aaa\nbbb\"}\r\n(2,3,4) = {\"aac\nbbc\"}")),
             Ok((CompleteStr(""), DMM {
                 dictionary: vec![
                     DictionaryEntry {
