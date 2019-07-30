@@ -122,6 +122,37 @@ pub enum Literal {
     Float(f64),
 }
 
+impl Literal {
+
+    pub fn as_path(&self) -> Option<&str> {
+        match self {
+            Literal::Path(p) => Some(&p),
+            _ => None,
+        }
+    }
+
+    pub fn as_str(&self) -> Option<&str> {
+        match self {
+            Literal::Str(s) => Some(&s),
+            _ => None,
+        }
+    }
+
+    pub fn as_number(&self) -> Option<i64> {
+        match self {
+            Literal::Number(i) => Some(*i),
+            _ => None,
+        }
+    }
+
+    pub fn as_float(&self) -> Option<f64> {
+        match self {
+            Literal::Float(f) => Some(*f),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Key(u32);
 
